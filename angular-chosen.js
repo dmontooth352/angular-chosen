@@ -1,50 +1,47 @@
 /*
  * Use this directive to convert drop downs into chosen drop downs.
  * http://harvesthq.github.io/chosen/
- * http://adityasharat.github.io/angular-chosen/
+ * http://adityasharat.github.io/angular-chosen/ - Original Repo for reference
  */
+
 (function (angular) {
+  
   var AngularChosen = angular.module('angular.chosen', []);
 
-
-  function chosen($timeout) {
-    var EVENTS, scope, linker, watchCollection;
-
-    /*
-     * List of events and the alias used for binding with angularJS
-     */
-    EVENTS = [{
-      onChange: 'change'
-    }, {
-      onReady: 'chosen:ready'
-    }, {
-      onMaxSelected: 'chosen:maxselected'
-    }, {
-      onShowDropdown: 'chosen:showing_dropdown'
-    }, {
-      onHideDropdown: 'chosen:hiding_dropdown'
-    }, {
-      onNoResult: 'chosen:no_results'
-    }];
-
-    /*
-     * Items to be added in the scope of the directive
-     */
+  AngularChosen.directive('chosen', Chosen);
+  
+  Chosen.$inject = ['$timeout'];
+  function Chosen($timeout){
+    
+    var EVENTS,
+        scope,
+        link,
+        watchCollection;
+        
+    EVENTS = [
+      { onChange:'change' },
+      { onReady:'chosen:ready' },
+      { onMaxSelected: 'chosen:maxselected' },
+      { onShowDropdown: 'chosen:showing_dropdown' },
+      { onHideDropdown: 'chosen:hiding_dropdown' },
+      { onNoResult: 'chosen:no_results' }
+    ];  
+    
     scope = {
-      options: '=', // the options array
-      ngModel: '=', // the model to bind to,,
+      options: '=',
+      ngModel: '=',
       ngDisabled: '='
     };
-
+    
     /*
      * initialize the list of items
      * to watch to trigger the chosen:updated event
      */
     watchCollection = [];
-    Object.keys(scope).forEach(function (scopeName) {
+    Object.keys(scope).forEach(function(scopeName){
       watchCollection.push(scopeName);
-    });
-
+    });    
+    
     /*
      * Add the list of event handler of the chosen
      * in the scope.
@@ -53,47 +50,50 @@
       var eventNameAlias = Object.keys(event)[0];
       scope[eventNameAlias] = '=';
     });
-
+    
     /* Linker for the directive */
     linker = function ($scope, iElm, iAttr) {
+      
       var maxSelection = parseInt(iAttr.maxSelection, 10),
-        searchThreshold = parseInt(iAttr.searchThreshold, 10);
+          searchThreshold = parseInt(iAttr.searchThreshold, 10);
 
       if (isNaN(maxSelection) || maxSelection === Infinity) {
-        maxSelection = undefined;
+          maxSelection = undefined;
       }
 
       if (isNaN(searchThreshold) || searchThreshold === Infinity) {
-        searchThreshold = undefined;
+          searchThreshold = undefined;
       }
 
       var allowSingleDeselect = iElm.attr('allow-single-deselect') !== undefined ? true : false;
 
       iElm.chosen({
-        width: '100%',
-        max_selected_options: maxSelection,
-        disable_search_threshold: searchThreshold,
-        search_contains: true,
-        allow_single_deselect: allowSingleDeselect
+          width: '100%',
+          max_selected_options: maxSelection,
+          disable_search_threshold: searchThreshold,
+          search_contains: true,
+          allow_single_deselect: allowSingleDeselect,
+          inherit_select_classes: true
       });
 
       iElm.on('change', function () {
-        iElm.trigger('chosen:updated');
+          iElm.trigger('chosen:updated');
+          
       });
 
       $scope.$watchGroup(watchCollection, function () {
-        $timeout(function () {
-          iElm.trigger('chosen:updated');
-        }, 100);
+          $timeout(function () {
+            iElm.trigger('chosen:updated');
+          }, 100);
       });
 
       // assign event handlers
       EVENTS.forEach(function (event) {
-        var eventNameAlias = Object.keys(event)[0];
+          var eventNameAlias = Object.keys(event)[0];
 
-        if (typeof $scope[eventNameAlias] === 'function') { // check if the handler is a function
-          iElm.on(event[eventNameAlias], function (event) {
-            $scope.$apply(function () {
+          if (typeof $scope[eventNameAlias] === 'function') { // check if the handler is a function
+              iElm.on(event[eventNameAlias], function (event) {
+                $scope.$apply(function () {
               $scope[eventNameAlias](event);
             });
           }); // listen to the event triggered by chosen
@@ -108,6 +108,7 @@
       restrict: 'A',
       link: linker
     };
+    
   }
-  AngularChosen.directive('chosen', ['$timeout', chosen]);
+  
 }(angular));
